@@ -1,10 +1,10 @@
 import { Level } from "level";
-import readline from "readline";
 
 import path from "path";
 import os from "os";
 import crypto from "crypto";
 import fs from "fs";
+import { promptPassword } from "./util";
 
 interface Vault {
   data: string;
@@ -12,7 +12,7 @@ interface Vault {
   salt: string;
 }
 
-const RABBY_DB_PATH = path.join(
+const DB_PATH = path.join(
   os.homedir(),
   // ModuleError: Iterator is not open
   // 如何 Chrome 正打使用会报错，请关闭
@@ -39,6 +39,7 @@ function decryptVault(vault: Vault, password: string): string {
 
   const decipher = crypto.createDecipheriv(
     "aes-256-gcm",
+
     Uint8Array.from(key),
     iv
   );
@@ -53,7 +54,7 @@ function decryptVault(vault: Vault, password: string): string {
 }
 
 async function extractVault(): Promise<Vault | null> {
-  const db = new Level<string, string>(RABBY_DB_PATH, {
+  const db = new Level<string, string>(DB_PATH, {
     valueEncoding: "utf8",
   });
   let result: Vault | null = null;
@@ -78,30 +79,7 @@ async function extractVault(): Promise<Vault | null> {
   await db.close();
   return result;
 }
-async function promptPassword(): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
 
-    (rl as any).stdoutMuted = true;
-
-    rl.question("🔑 请输入 Rabby 密码：", (password: string) => {
-      console.log("\n");
-      rl.close();
-      resolve(password);
-    });
-
-    (rl as any)._writeToOutput = function (_stringToWrite: string) {
-      if ((rl as any).stdoutMuted) {
-        (rl as any).output.write("*");
-      } else {
-        (rl as any).output.write(_stringToWrite);
-      }
-    };
-  });
-}
 (async () => {
   console.log("📦 正在提取 Rabby 助记词 vault...\n");
 
@@ -120,8 +98,8 @@ async function promptPassword(): Promise<string> {
     const mnemonic = decryptVault(vault, PASSWORD);
     console.log(`✅ 解密成功！`);
 
-    fs.writeFileSync("mnemonic.txt", mnemonic, "utf-8");
-    console.log("\n📄 助记词已保存到 mnemonic.txt");
+    fs.writeFileSync("rabby-mnemonic.txt", mnemonic, "utf-8");
+    console.log("\n📄 助记词已保存到 rabby-mnemonic.txt");
   } catch (e) {
     console.error("\n❌ 解密失败，可能是密码错误或数据损坏。\n", e);
   }

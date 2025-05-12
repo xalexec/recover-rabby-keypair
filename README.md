@@ -51,13 +51,13 @@ pnpm i
 ### 执行恢复脚本 / Run Recovery Tool
 
 ```bash
-pnpm dlx ns-node main.ts
+pnpm dlx ns-node rabby.ts
 ```
 
 OR
 
 ```bash
-pnpm run main
+pnpm run rabby
 ```
 
 你将看到提示输入 Rabby 密码：
